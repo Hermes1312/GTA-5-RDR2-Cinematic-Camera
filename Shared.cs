@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Rdr2CinematicCamera
 {
-    public static class Shared
+    public static class Global
     {
         public static Config Config { get; set; }
         public static bool IsActive { get; set; } = false;

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Resources;
 using System.Text;
 using System.Threading.Tasks;
 using GTA;
@@ -34,6 +36,7 @@ namespace Rdr2CinematicCamera
                 "Rushed",
                 "Sometimes Overtake Traffic"
             };
+
             var enabledBarsCheckBox = new UIMenuCheckboxItem("Enabled: ", config.CinematicBars);
             _uiMenu.AddItem(enabledBarsCheckBox);
             
@@ -43,6 +46,16 @@ namespace Rdr2CinematicCamera
             var menuDrivingStyles = new UIMenuListItem("Driving style: ", listOfDrivingStyles, 0);
             _uiMenu.AddItem(menuDrivingStyles);
             menuDrivingStyles.Index = GetIndexFromEnum(config.DrivingStyle);
+
+            var airportList = new List<object>
+            {
+                "Los Santos Airport",
+                "Trevor's Airport",
+                "McKenzie Airport"
+            };
+
+            var menuLand = new UIMenuListItem("Land plane on: ", airportList, 0);
+            //_uiMenu.AddItem(menuLand);
 
             var menuSpeed = new UIMenuSliderItem("Speed: ")
             {
@@ -55,17 +68,42 @@ namespace Rdr2CinematicCamera
             var saveButton = new UIMenuItem("Save changes");
             _uiMenu.AddItem(saveButton);
 
+            var restartButton = new UIMenuItem("Restart");
+            _uiMenu.AddItem(restartButton);
+
             _uiMenu.OnItemSelect += (sender, item, index) =>
             {
-                if (item != saveButton) return;
+                if (item == saveButton)
+                {
+                    config.DrivingStyle = config.DrivingStyles[menuDrivingStyles.Index];
+                    config.Speed = menuSpeed.Value;
+                    config.CinematicBars = cinematicBarsCheckBox.Checked;
+                    config.Save();
 
-                config.DrivingStyle = config.DrivingStyles[menuDrivingStyles.Index];
-                config.Speed = menuSpeed.Value;
-                config.CinematicBars = cinematicBarsCheckBox.Checked;
-                config.Save();
+                    if(Global.IsDriving)
+                        Game.Player.Character.Task.DriveTo(Game.Player.Character.CurrentVehicle, World.WaypointPosition, 25.0f, config.Speed, config.DrivingStyle);
+                }
 
-                Game.Player.Character.Task.DriveTo(Game.Player.Character.CurrentVehicle, World.WaypointPosition, 25.0f, config.Speed, config.DrivingStyle);
+                else if (item == restartButton)
+                {
+                    Reset();
+                }
+
+                //else if (item == menuLand)
+                //    Airport.Land(menuLand.Index);
             };
+        }
+
+        private void Reset()
+        {
+            Global.IsActive = false;
+            Global.IsCruising = false;
+            Global.IsDriving = false;
+            Global.ForceCinCam = false;
+            Global.ForceCinCam2 = false;
+            Global.SameHold = false;
+            Global.AlreadyCleared = false;
+            Global.CinematicBars.Setup(0);
         }
 
         public void ProcessMenus()
